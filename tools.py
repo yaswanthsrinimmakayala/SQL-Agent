@@ -3,7 +3,7 @@ from langgraph.runtime import get_runtime
 from langchain_community.utilities import SQLDatabase
 from dataclasses import dataclass
 
-db = SQLDatabase("sqlite:///mydb.db")
+db = SQLDatabase.from_uri("sqlite:///mydb.db")
 
 @dataclass
 class RuntimeContext:

@@ -1,7 +1,8 @@
 # initialization of model 
-from langchain.agent import create_agent
+from langchain.agents import create_agent
 from langchain.chat_models import init_chat_model
-from tools import RuntimeContext,execute_sql
+from tools import RuntimeContext,execute_sql,db
+from dotenv import load_dotenv
 import os
 load_dotenv()
 
@@ -25,5 +26,18 @@ agent = create_agent(
     model = model,
     tools = [execute_sql],
     system_prompt = prompt,
-    context = RuntimeContext
+    context_schema = RuntimeContext
 )
+
+def answer(question:str, thread_id:str)->str:
+    result_stream = agent.stream(
+        {"messages":[{"role":"user","content":question}]},
+        config = {"Configurable":{"thread_id":thread_id}},
+        context = RuntimeContext(db=db),
+        stream_mode = ["values"]
+        )
+    
+    last_step = ""
+    for step in result_stream:
+        last_step = step
+    return last_step["messages"][-1].pretty_print()
