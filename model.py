@@ -1,6 +1,7 @@
 # initialization of model 
 from langchain.agent import create_agent
 from langchain.chat_models import init_chat_model
+from tools import RuntimeContext,execute_sql
 import os
 load_dotenv()
 
@@ -22,6 +23,7 @@ Rules:
 """
 agent = create_agent(
     model = model,
-    tools = [],
-    system_prompt = prompt
+    tools = [execute_sql],
+    system_prompt = prompt,
+    context = RuntimeContext
 )
