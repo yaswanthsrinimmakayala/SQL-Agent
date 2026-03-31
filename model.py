@@ -34,10 +34,10 @@ def answer(question:str, thread_id:str)->str:
         {"messages":[{"role":"user","content":question}]},
         config = {"Configurable":{"thread_id":thread_id}},
         context = RuntimeContext(db=db),
-        stream_mode = ["values"]
+        stream_mode = "values"
         )
     
     last_step = ""
     for step in result_stream:
         last_step = step
-    return last_step["messages"][-1].pretty_print()
+    return last_step["messages"][-1].content

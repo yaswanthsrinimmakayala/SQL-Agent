@@ -1,32 +1,48 @@
-# UI
 import streamlit as st
+import sqlite3
 import uuid
 from model import answer
-# Title
+from tools import refresh
+st.set_page_config(layout="wide")
+conn = sqlite3.connect("mydb.db")
 st.title("SQL Agent")
-# Creation of session variable messages to store the conversation
+
+# Session state
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
 if "conversation_id" not in st.session_state:
-    st.session_state.conversation_id = ""
+    st.session_state.conversation_id = str(uuid.uuid4())
 
-# Displaying the messages in the UI
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.write(message["content"])
 
-# User Input
-user_question = st.chat_input("Ask about the data")
-conv_id = uuid.uuid1()
-# Writing the user input to UI and appending it to conversation (messages)
-if user_question:
-    with st.chat_message("user"):
-        st.write(user_question)
-    st.session_state.messages.append({"role":"user","content":user_question})
-    response = answer(user_question,conv_id)
-    if response:
-        with st.chat_message("assistant"):
-            st.write(response)
-            st.session_state.messages.append({"role":"assistant","content":response})
-            
+# Split screen
+col1, col2 = st.columns([1, 1])  
+
+with col1:
+    st.subheader("💬 Chat")
+
+    chat_container = st.container(height=500)
+    with chat_container:
+        for msg in st.session_state.messages:
+            with st.chat_message(msg["role"]):
+                st.write(msg["content"])
+
+
+    user_question = st.chat_input("Ask about the data")
+
+    if user_question:
+        st.session_state.messages.append({
+            "role": "user",
+            "content": user_question
+        })
+        response = answer(user_question, st.session_state.conversation_id)
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": response
+        })
+ 
+
+with col2:
+    st.subheader("📊 Data")
+    refresh(conn)
+

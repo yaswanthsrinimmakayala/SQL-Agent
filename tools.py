@@ -2,6 +2,7 @@ from langchain_core.tools import tool
 from langgraph.runtime import get_runtime
 from langchain_community.utilities import SQLDatabase
 from dataclasses import dataclass
+import streamlit as st
 
 db = SQLDatabase.from_uri("sqlite:///mydb.db")
 
@@ -18,4 +19,10 @@ def execute_sql(query:str)->str:
         return db.run(query)
     except Exception as e:
         return f"Error: {e}"
+    
+
+def refresh(conn):
+    st.write(conn.execute("SELECT *FROM CUSTOMERS"))
+    st.write(conn.execute("SELECT *FROM ORDERS"))
+    st.write(conn.execute("SELECT *FROM CATEGORIES"))
     
