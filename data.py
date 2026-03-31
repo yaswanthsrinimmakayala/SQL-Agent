@@ -1,103 +1,132 @@
 import sqlite3
-from datetime import datetime,timedelta
-import random
-# connection to database
-conn = sqlite3.connect("mydb.db")
+def actual_data():
+    conn = sqlite3.connect("mydb.db")
+    cursor = conn.cursor()
+    cursor.executescript("""
 
-# cursor object
-cursor = conn.cursor()
+    DROP TABLE IF EXISTS order_items;
+    DROP TABLE IF EXISTS orders;
+    DROP TABLE IF EXISTS products;
+    DROP TABLE IF EXISTS categories;
+    DROP TABLE IF EXISTS customers;
 
-
-# Creating a tables
-
-cursor.executescript("""
-CREATE TABLE IF NOT EXISTS customers(
-               id INTEGER PRIMARY KEY,
-               name TEXT,
-               email TEXT,
-               city TEXT
+    CREATE TABLE customers (
+        id INTEGER PRIMARY KEY,
+        name TEXT,
+        email TEXT,
+        city TEXT
     );
 
-CREATE TABLE IF NOT EXISTS categories(
-            id INTEGER PRIMARY KEY,
-            name TEXT
+    CREATE TABLE categories (
+        id INTEGER PRIMARY KEY,
+        name TEXT
     );
 
-CREATE TABLE IF NOT EXISTS products (
-            id INTEGER PRIMARY KEY,
-            name TEXT,
-            category_id INTEGER,
-            price REAL,
-            FOREIGN KEY(category_id) REFERENCES categories(id)
-);
+    CREATE TABLE products (
+        id INTEGER PRIMARY KEY,
+        name TEXT,
+        category_id INTEGER,
+        price REAL,
+        FOREIGN KEY(category_id) REFERENCES categories(id)
+    );
 
+    CREATE TABLE orders (
+        id INTEGER PRIMARY KEY,
+        customer_id INTEGER,
+        order_date TEXT,
+        status TEXT,
+        payment_method TEXT,
+        FOREIGN KEY(customer_id) REFERENCES customers(id)
+    );
 
-CREATE TABLE IF NOT EXISTS orders(
-            id INTEGER PRIMARY KEY,
-            customer_id INTEGER,
-            order_date TEXT,
-            FOREIGN KEY(customer_id) REFERENCES categories(id)
-);
+    CREATE TABLE order_items (
+        id INTEGER PRIMARY KEY,
+        order_id INTEGER,
+        product_id INTEGER,
+        quantity INTEGER,
+        FOREIGN KEY(order_id) REFERENCES orders(id),
+        FOREIGN KEY(product_id) REFERENCES products(id)
+    );
 
-CREATE TABLE IF NOT EXISTS order_items (
-            id INTEGER PRIMARY KEY,
-            order_id INTEGER,
-            product_id INTEGER,
-            quantity INTEGER,
-            FOREIGN KEY(order_id) REFERENCES orders(id),
-            FOREIGN KEY(product_id) REFERENCES products(id)
-);                  
-""")
-# Insertion of data
+    """)
 
-customers = [
-    ("Alice", "alice@email.com", "Bangalore"),
-    ("Bob", "bob@email.com", "Mumbai"),
-    ("Charlie", "charlie@email.com", "Delhi"),
-    ("David", "david@email.com", "Chennai"),
-]
+    # Customers
+    customers = [
+        (1, "Ravi Kumar", "ravi.kumar@gmail.com", "Bangalore"),
+        (2, "Priya Sharma", "priya.sharma@yahoo.com", "Mumbai"),
+        (3, "Arjun Reddy", "arjun.reddy@outlook.com", "Hyderabad"),
+        (4, "Neha Verma", "neha.verma@gmail.com", "Delhi"),
+        (5, "Karan Mehta", "karan.mehta@gmail.com", "Pune"),
+        (6, "Sneha Iyer", "sneha.iyer@yahoo.com", "Chennai"),
+    ]
 
-cursor.executemany(
-    "INSERT INTO customers (name, email, city) VALUES (?, ?, ?)",
-    customers
-)
+    cursor.executemany(
+        "INSERT INTO customers VALUES (?, ?, ?, ?)", customers
+    )
 
-categories = [("Electronics",), ("Clothing",), ("Books",)]
-cursor.executemany("INSERT INTO categories (name) VALUES (?)", categories)
+    # Categories
+    categories = [
+        (1, "Electronics"),
+        (2, "Clothing"),
+        (3, "Books"),
+        (4, "Home & Kitchen")
+    ]
 
-products = [
-    ("Laptop", 1, 80000),
-    ("Phone", 1, 40000),
-    ("T-Shirt", 2, 500),
-    ("Jeans", 2, 1500),
-    ("Novel", 3, 300),
-]
+    cursor.executemany(
+        "INSERT INTO categories VALUES (?, ?)", categories
+    )
 
-cursor.executemany(
-    "INSERT INTO products (name, category_id, price) VALUES (?, ?, ?)",
-    products
-)
+    # Products
+    products = [
+        (1, "iPhone 14", 1, 70000),
+        (2, "Samsung Galaxy S22", 1, 65000),
+        (3, "Dell Inspiron Laptop", 1, 85000),
+        (4, "Men's T-Shirt", 2, 799),
+        (5, "Women's Kurti", 2, 1200),
+        (6, "Blue Jeans", 2, 2000),
+        (7, "Python Programming Book", 3, 599),
+        (8, "Data Science Handbook", 3, 899),
+        (9, "Mixer Grinder", 4, 3000),
+        (10, "Cookware Set", 4, 4500),
+    ]
 
-orders = [(1, 1, '2026-03-01'),
-(2, 2, '2026-03-05'),
-(3, 1, '2026-03-10'),
-(4, 3, '2026-03-15'),
-(5, 4, '2026-03-20')]
-cursor.executemany(
-    "INSERT INTO orders (id, customer_id, order_date) VALUES(?,?,?)",orders
-)
+    cursor.executemany(
+        "INSERT INTO products VALUES (?, ?, ?, ?)", products
+    )
 
-order_items = [
-    (1, 1, 1, 1),  
-    (2, 1, 5, 2), 
-    (3, 2, 2, 1),  
-    (4, 2, 3, 3),  
-    (5, 3, 4, 2),
-    (6, 4, 5, 5),
-    (7, 5, 1, 1),  
-    (8, 5, 3, 2)]
-cursor.executemany("INSERT INTO order_items (id, order_id, product_id, quantity) VALUES(?,?,?,?)",
-                   order_items
-)
-conn.commit()
-conn.close()
+    # Orders
+    orders = [
+        (1, 1, "2026-03-01", "Delivered", "UPI"),
+        (2, 2, "2026-03-03", "Delivered", "Credit Card"),
+        (3, 3, "2026-03-05", "Pending", "UPI"),
+        (4, 1, "2026-03-07", "Delivered", "Debit Card"),
+        (5, 4, "2026-03-10", "Cancelled", "COD"),
+        (6, 5, "2026-03-12", "Delivered", "UPI"),
+        (7, 6, "2026-03-15", "Delivered", "Credit Card"),
+    ]
+
+    cursor.executemany(
+        "INSERT INTO orders VALUES (?, ?, ?, ?, ?)", orders
+    )
+
+    # Order Items
+    order_items = [
+        (1, 1, 1, 1),   
+        (2, 1, 7, 2),   
+        (3, 2, 2, 1),  
+        (4, 2, 4, 3),  
+        (5, 3, 3, 1),  
+        (6, 4, 5, 2),
+        (7, 5, 8, 1),   
+        (8, 6, 9, 1),   
+        (9, 7, 10, 1),  
+    ]
+
+    cursor.executemany(
+        "INSERT INTO order_items VALUES (?, ?, ?, ?)", order_items
+    )
+
+    conn.commit()
+    conn.close()
+
+    print("Database created with realistic data!")

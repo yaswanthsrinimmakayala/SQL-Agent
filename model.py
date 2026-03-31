@@ -10,7 +10,7 @@ model = init_chat_model(
     model = "gemini-2.5-flash",
     model_provider = "google_genai",
     temperature = 0,
-    api_key = os.getenv("API_Key")
+    api_key = os.getenv("API_Key") 
 )
 prompt = """
 You are an helful SQL agent.

@@ -25,4 +25,5 @@ def refresh(conn):
     st.write(conn.execute("SELECT *FROM CUSTOMERS"))
     st.write(conn.execute("SELECT *FROM ORDERS"))
     st.write(conn.execute("SELECT *FROM CATEGORIES"))
+    st.write(conn.execute("SELECT *FROM PRODUCTS"))
     
