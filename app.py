@@ -30,7 +30,6 @@ with col2:
     st.subheader("📊 Data")
     if st.button("Actual Data"):
         actual_data()
-        refresh(conn)
     with st.container(height=550):
         refresh(conn)
 
@@ -45,7 +44,11 @@ if user_question:
 
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
-                response = answer(user_question, st.session_state.conversation_id)
-            st.write(response)
+                try:
+                    response = answer(user_question, st.session_state.conversation_id)
+                    st.write(response)
+                except Exception as e:
+                    response = "Hey Buddy, Time's up .Quota Reached!  "
+                    st.write("Hey Buddy, Time's up .Quota Reached!  ",e) 
 
     st.session_state.messages.append({"role": "assistant", "content": response})
