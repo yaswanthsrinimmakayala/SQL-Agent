@@ -2,7 +2,7 @@ from langchain_core.tools import tool
 from langgraph.runtime import get_runtime
 from langchain_community.utilities import SQLDatabase
 from dataclasses import dataclass
-import streamlit as st
+
 
 db = SQLDatabase.from_uri("sqlite:///mydb.db")
 
@@ -19,11 +19,24 @@ def execute_sql(query:str)->str:
         return db.run(query)
     except Exception as e:
         return f"Error: {e}"
-    
 
-def refresh(conn):
-    st.write(conn.execute("SELECT *FROM CUSTOMERS"))
-    st.write(conn.execute("SELECT *FROM ORDERS"))
-    st.write(conn.execute("SELECT *FROM CATEGORIES"))
-    st.write(conn.execute("SELECT *FROM PRODUCTS"))
+@tool
+def get_tables():
+    """Use this tool to get the list of tables present in the database"""
+    runtime = get_runtime(RuntimeContext)
+    db = runtime.context.db
+    try:
+        return db.run("SELECT name FROM sqlite_master WHERE type='table'")
+    except Exception as e:
+        return f"Error :{e}" 
+@tool
+def get_schema(table_name:str)->str:
+    """Use this tool to get the information about the schema information of a table in the database"""
+    runtime = get_runtime(RuntimeContext)
+    db = runtime.context.db
+    try:
+        return db.run(f"PRAGMA table_info({table_name})")
+    except Exception as e:
+        return f"Error : {e}"
+
     

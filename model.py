@@ -1,9 +1,10 @@
 # initialization of model 
 from langchain.agents import create_agent
 from langchain.chat_models import init_chat_model
-from tools import RuntimeContext,execute_sql,db
+from tools import RuntimeContext,execute_sql,db,get_tables,get_schema
 from dotenv import load_dotenv
 from langchain_core.messages import AIMessage
+from langgraph.checkpoint.memory import InMemorySaver
 import os
 load_dotenv()
 
@@ -15,12 +16,6 @@ model = init_chat_model(
 )
 prompt = """
 You are an helful SQL agent.
-Database schema:
-- customers(id, name, email, city)
-- categories(id, name)
-- products(id, name, category_id, price)
-- orders(id, customer_id, order_date, status, payment_method)
-- order_items(id, order_id, product_id, quantity)
 Rules:
 - You will help the user by taking the user input, and will create SQL queries to relate the user input to answer them.
 - You also follow actions specified by user such as modifications to the data as specified by user.
@@ -32,9 +27,10 @@ Rules:
 """
 agent = create_agent(
     model = model,
-    tools = [execute_sql],
+    tools = [execute_sql,get_schema,get_tables],
     system_prompt = prompt,
-    context_schema = RuntimeContext
+    context_schema = RuntimeContext,
+    checkpointer = InMemorySaver()
 )
 def extract_content(content):
     if isinstance(content, str):

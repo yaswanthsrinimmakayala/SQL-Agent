@@ -6,7 +6,11 @@ from tools import refresh
 from data import actual_data
 
 st.set_page_config(layout="wide", page_title="SQL Agent")
-
+def refresh(conn):
+    st.write(conn.execute("SELECT *FROM CUSTOMERS"))
+    st.write(conn.execute("SELECT *FROM ORDERS"))
+    st.write(conn.execute("SELECT *FROM CATEGORIES"))
+    st.write(conn.execute("SELECT *FROM PRODUCTS"))
 conn = sqlite3.connect("mydb.db")
 
 if "messages" not in st.session_state:
