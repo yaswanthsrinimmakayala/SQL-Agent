@@ -3,17 +3,13 @@ from langchain.agents import create_agent
 from langchain.chat_models import init_chat_model
 from tools import RuntimeContext,execute_sql,db,get_tables,get_schema
 from dotenv import load_dotenv
-from langchain_core.messages import AIMessage
-from langgraph.checkpoint.memory import InMemorySaver
+from langchain_core.messages import AIMessage, HumanMessage,ToolMessage
+import streamlit as st
 import os
+import json
 load_dotenv()
 
-model = init_chat_model(
-    model = "gemini-2.5-flash",
-    model_provider = "google_genai",
-    temperature = 0,
-    api_key = os.getenv("API_Key") 
-)
+
 prompt = """
 You are an helful SQL agent.
 Rules:
@@ -25,13 +21,6 @@ Rules:
 - Prefer explicit column lists; avoid select *.
 - Always present query results as a clean markdown table, never as raw tuples or lists.
 """
-agent = create_agent(
-    model = model,
-    tools = [execute_sql,get_schema,get_tables],
-    system_prompt = prompt,
-    context_schema = RuntimeContext,
-    checkpointer = InMemorySaver()
-)
 def extract_content(content):
     if isinstance(content, str):
         return content
@@ -42,7 +31,7 @@ def extract_content(content):
             response+="\n"
     return response
 
-def answer(question:str, thread_id:str)->str:
+def answer(question:str, thread_id:str,agent)->str:
     result_stream = agent.stream(
         {"messages":[{"role":"user","content":question}]},
         config = {"configurable":{"thread_id":thread_id}},
@@ -51,13 +40,31 @@ def answer(question:str, thread_id:str)->str:
         )
     
     last_step = ""
+    steps_executed = "These are steps followed:\n"
     for step in result_stream:
-        print(step)
+        print(json.dumps(step,indent=2, default=str))
         last_step = step
     
+    for msg in last_step["messages"]:
+        if isinstance(msg,AIMessage) and msg.tool_calls:
+            schema_tables = []
+            for tool_call in msg.tool_calls:
+                tool_name = tool_call["name"]
+                tool_args = tool_call["args"]
+                if tool_name=="execute_sql":
+                    steps_executed+=f"\nExecuting query{tool_args['query']}...\n"
+                elif tool_name == "get_tables":
+                    steps_executed += f"\nGetting the tables in the database\n"
+                elif tool_name == "get_schema":
+                    schema_tables.append(tool_args['table_name'])
+            if schema_tables:
+                steps_executed += f"\nInspecting schema of {', '.join(schema_tables)}\n"
+
+
+
     for msg in reversed(last_step["messages"]):
         if isinstance(msg,AIMessage):
-            return extract_content(msg.content)
+            return steps_executed,extract_content(msg.content)
     
     return "No response generated"
 
